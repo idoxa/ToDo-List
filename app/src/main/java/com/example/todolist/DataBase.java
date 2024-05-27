@@ -17,7 +17,7 @@ public class DataBase {
 
     public DataBase () {
         Random random = new Random();                                                               // Переменная со случайными числами
-        for (int i = 0; i < 20_000; i++) {
+        for (int i = 0; i < 20; i++) {
             Note note = new Note(i, "Note " + i, random.nextInt(3));                     // Заполняем заметки со случайным значением приоритета
             notes.add(note);                                                                        // Добавляем заметки
         }
