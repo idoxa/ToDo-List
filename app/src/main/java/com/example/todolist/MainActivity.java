@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewNotes;
     private FloatingActionButton buttonAddNote;
+    private NotesAdapter notesAdapter;
 
     private DataBase dataBase = DataBase.getInstance();                                             // колекция объектов
 
@@ -38,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
         initViews();
+
+        notesAdapter = new NotesAdapter();
+        recyclerViewNotes.setAdapter(notesAdapter);
+
 
         // Выводим заметки
         buttonAddNote.setOnClickListener(new View.OnClickListener() {
@@ -61,35 +67,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNotes() {                                                                        // Метод который отображает все заметки
-        recyclerViewNotes.removeAllViews();
-        for (Note note : dataBase.getNotes()) {
-            View view = getLayoutInflater().inflate(R.layout.note_item, recyclerViewNotes, false);   // Создаем View из макета note_item при помощи LayoutInflater()
-            view.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    dataBase.remove(note.getId());
-                    showNotes();
-                }
-            });
-            TextView textViewNote = view.findViewById(R.id.textViewNote);                           // Поиск элементов внутри View
-            textViewNote.setText(note.getText());                                                   // Устанавливаем текст View
+        notesAdapter.setNotes(dataBase.getNotes());
 
-            int colorResId;                                                                         // Устанавливаем цвет View, по id цвета
-            switch (note.getPriority()) {
-                case 0:
-                    colorResId = android.R.color.holo_green_light;                                  // Установка цвета из андроид
-                    break;
-                case 1:
-                    colorResId = android.R.color.holo_orange_light;                                 // Установка цвета из андроид
-                    break;
-                default:
-                    colorResId = android.R.color.holo_red_light;                                    // Установка цвета из андроид по дефолту
-                    break;
-
-            }
-            int color = ContextCompat.getColor(this, colorResId);                            // Присваивание цвета
-            textViewNote.setBackgroundColor(color);                                                 // Установка цвета
-            recyclerViewNotes.addView(view);                                                        // Добавление в linearLayoutNotes
-        }
     }
 }
