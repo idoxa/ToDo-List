@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton buttonAddNote;
     private NotesAdapter notesAdapter;
 
-    private DataBase dataBase = DataBase.getInstance();                                             // колекция объектов
+    private NoteDataBase noteDataBase;                                    // колекция объектов
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        noteDataBase = NoteDataBase.getInstance(getApplication());
         initViews();
 
         notesAdapter = new NotesAdapter();
@@ -67,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getAdapterPosition();
                 Note note = notesAdapter.getNotes().get(position);
-                dataBase.remove(note.getId());
+                noteDataBase.notesDao().remove(note.getId());
                 showNotes();
             }
         });
@@ -95,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNotes() {                                                                        // Метод который отображает все заметки
-        notesAdapter.setNotes(dataBase.getNotes());
+        notesAdapter.setNotes(noteDataBase.notesDao().getNotes());
 
     }
 }
