@@ -2,6 +2,8 @@ package com.example.todolist;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.service.controls.actions.FloatAction;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -21,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private NotesAdapter notesAdapter;
 
     private NoteDataBase noteDataBase;                                    // колекция объектов
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,22 +60,34 @@ public class MainActivity extends AppCompatActivity {
                 new ItemTouchHelper.SimpleCallback(
                         0,
                         ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
-            @Override
-            public boolean onMove(
-                    @NonNull RecyclerView recyclerView,
-                    @NonNull RecyclerView.ViewHolder viewHolder,
-                    @NonNull RecyclerView.ViewHolder target) {
-                return false;
-            }
+                    @Override
+                    public boolean onMove(
+                            @NonNull RecyclerView recyclerView,
+                            @NonNull RecyclerView.ViewHolder viewHolder,
+                            @NonNull RecyclerView.ViewHolder target) {
+                        return false;
+                    }
 
-            @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int position = viewHolder.getAdapterPosition();
-                Note note = notesAdapter.getNotes().get(position);
-                noteDataBase.notesDao().remove(note.getId());
-                showNotes();
-            }
-        });
+                    @Override
+                    public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                        int position = viewHolder.getAdapterPosition();
+                        Note note = notesAdapter.getNotes().get(position);
+                        Thread thread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                noteDataBase.notesDao().remove(note.getId());
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showNotes();
+                                    }
+                                });
+                            }
+                        });
+                        thread.start();
+
+                    }
+                });
         itemTouchHelper.attachToRecyclerView(recyclerViewNotes);
 
         // Выводим заметки
@@ -96,7 +112,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNotes() {                                                                        // Метод который отображает все заметки
-        notesAdapter.setNotes(noteDataBase.notesDao().getNotes());
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<Note> notes = noteDataBase.notesDao().getNotes();
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        notesAdapter.setNotes(notes);
+                    }
+                });
+
+            }
+        });
+        thread.start();
 
     }
 }

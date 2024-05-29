@@ -3,11 +3,11 @@ package com.example.todolist;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,10 +20,10 @@ public class AddNoteActivity extends AppCompatActivity {
     private EditText editTextNote;
     private RadioButton radioButtonLow;
     private RadioButton radioButtonMedium;
-    private RadioButton radioButtonHeight;
     private Button buttonSave;
 
     private NoteDataBase noteDataBase;
+    private final Handler handler = new Handler(Looper.getMainLooper());                                  // передаем главный поток
 
 
     @Override
@@ -38,12 +38,7 @@ public class AddNoteActivity extends AppCompatActivity {
             return insets;
         });
         initViews();
-        buttonSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                saveNote();
-            }
-        });
+        buttonSave.setOnClickListener(v -> saveNote());
 
     }
 
@@ -51,7 +46,6 @@ public class AddNoteActivity extends AppCompatActivity {
         editTextNote = findViewById(R.id.editTextNote);
         radioButtonLow = findViewById(R.id.radioButtonLow);
         radioButtonMedium = findViewById(R.id.radioButtonMedium);
-        radioButtonHeight = findViewById(R.id.radioButtonHeight);
         buttonSave = findViewById(R.id.buttonSave);
     }
 
@@ -59,9 +53,18 @@ public class AddNoteActivity extends AppCompatActivity {
         String text = editTextNote.getText().toString().trim();
         int priority = getPriority();
         Note note = new Note(text, priority);
-        noteDataBase.notesDao().add(note);
 
-        finish();
+
+        // создаем новый поток
+        Thread thread = new Thread(() -> {
+            noteDataBase.notesDao().add(note);                                                  // добавление заметки
+            handler.post(this::finish);
+        });
+        thread.start();                                                                             // запускаем новый поток
+        handler.post(() -> {
+
+        });
+
     }
 
     private int getPriority() {
